@@ -42,6 +42,7 @@ public class XExpressionParser {
 
     /**
      * 扫描解析校验对象
+     *
      * @param classes
      */
     public void parseXBean(Set<Class<?>> classes) {
@@ -57,6 +58,7 @@ public class XExpressionParser {
 
     /**
      * 解析校验对象
+     *
      * @param method
      */
     public void parseXBean_(Method method) {
@@ -73,7 +75,7 @@ public class XExpressionParser {
 
         String[] urls = getUrls(method);
         boolean hasPathParam = false;
-        for (String url :urls) {
+        for (String url : urls) {
             if (url.contains("{")) {
                 hasPathParam = true;
             }
@@ -122,7 +124,7 @@ public class XExpressionParser {
     }
 
     private String[] getUrlsCore(Method method) {
-        String[] urls = new String[0];
+        String[] urls;
         if (method.isAnnotationPresent(RequestMapping.class)) {
             RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
             urls = requestMapping.value();
@@ -149,6 +151,7 @@ public class XExpressionParser {
 
     /**
      * 字段别名转map
+     *
      * @param fieldAlias
      * @return
      */
@@ -156,8 +159,8 @@ public class XExpressionParser {
         Map<String, String> m = new HashMap<>();
         for (String alias : fieldAlias) {
             String[] split = alias.replaceAll("\\s", "").split(",");
-            for (String sp :split) {
-                if(StringUtil.isEmpty(sp)) {
+            for (String sp : split) {
+                if (StringUtil.isEmpty(sp)) {
                     continue;
                 }
                 String[] fieldAndName = sp.split("=");
@@ -174,6 +177,7 @@ public class XExpressionParser {
 
     /**
      * 解析表达式类型
+     *
      * @param expression
      * @return
      */
