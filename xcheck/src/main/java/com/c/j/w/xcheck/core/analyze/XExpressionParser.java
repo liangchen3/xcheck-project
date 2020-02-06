@@ -12,6 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.mvc.condition.PatternsRequestCondition;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -30,6 +35,11 @@ public class XExpressionParser {
     private ConditionExpressionAnalyzer conditionExpressionAnalyzer;
     @Autowired
     private LogicExpressionAnalyzer logicExpressionAnalyzer;
+
+    @Autowired
+    WebApplicationContext applicationContext;
+
+
     /**
      * 扫描解析校验对象
      * @param classes
@@ -75,7 +85,44 @@ public class XExpressionParser {
     }
 
     private String[] getUrls(Method method) {
-        String[] urls;
+        String[] urls = new String[0];
+        RequestMappingHandlerMapping mapping = applicationContext.getBean(RequestMappingHandlerMapping.class);
+        // 获取url与类和方法的对应信息
+        Map<RequestMappingInfo, HandlerMethod> map = mapping.getHandlerMethods();
+        for (Map.Entry<RequestMappingInfo, HandlerMethod> m : map.entrySet()) {
+            RequestMappingInfo info = m.getKey();
+            PatternsRequestCondition p = info.getPatternsCondition();
+            HandlerMethod handlerMethod = m.getValue();
+            //比较类名和方法名，两个因素唯一加起来判断是不是同一个方法
+            String reflectClassAndMethodStr = method.getDeclaringClass().getName() + method.getName();
+            String autowiredClassAndMethodStr = handlerMethod.getMethod().
+                    getDeclaringClass().getName() + handlerMethod.getMethod().getName();
+            if (reflectClassAndMethodStr.equals(autowiredClassAndMethodStr)) {
+                urls = new String[p.getPatterns().size()];
+                int i = 0;
+                for (String u : p.getPatterns()) {
+                    urls[i] = u;
+                    i++;
+                }
+            }
+        }
+
+        Class[] interfaces = method.getClass().getInterfaces();
+        if (interfaces != null) {
+            for (Class clz : interfaces) {
+                Method[] methods = clz.getMethods();
+                for (Method m : methods) {
+                    urls = getUrlsCore(method);
+                }
+            }
+        } else {
+            urls = getUrlsCore(method);
+        }
+        return urls;
+    }
+
+    private String[] getUrlsCore(Method method) {
+        String[] urls = new String[0];
         if (method.isAnnotationPresent(RequestMapping.class)) {
             RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
             urls = requestMapping.value();
